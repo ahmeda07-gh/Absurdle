@@ -1,0 +1,205 @@
+// Ahmed Al Sammarraie
+// 11/3/25
+// CSE 122
+// P2: Absurdle
+// TA: Katharine Zhang
+
+// This program is a game of Absurdle, which loads a dictionary of words
+// and lets the user guess words of a exact length. Then the program gives feedback
+// green if correct, yellow if present, gray if absent, the program tries to prolong the game
+// by keeping the set of possible words as large as possible.
+
+import java.util.*;
+import java.io.*;
+
+public class Absurdle  {
+    public static final String GREEN = "🟩";
+    public static final String YELLOW = "🟨";
+    public static final String GRAY = "⬜";
+
+    // [[ ALL OF MAIN PROVIDED ]]
+    public static void main(String[] args) throws FileNotFoundException {
+        Scanner console = new Scanner(System.in);
+        System.out.println("Welcome to the game of Absurdle.");
+
+        System.out.print("What dictionary would you like to use? ");
+        String dictName = console.next();
+
+        System.out.print("What length word would you like to guess? ");
+        int wordLength = console.nextInt();
+
+        List<String> contents = loadFile(new Scanner(new File(dictName)));
+        Set<String> words = prepDictionary(contents, wordLength);
+
+        List<String> guessedPatterns = new ArrayList<>();
+        while (!isFinished(guessedPatterns)) {
+            System.out.print("> ");
+            String guess = console.next();
+            String pattern = recordGuess(guess, words, wordLength);
+            guessedPatterns.add(pattern);
+            System.out.println(": " + pattern);
+            System.out.println();
+        }
+        System.out.println("Absurdle " + guessedPatterns.size() + "/∞");
+        System.out.println();
+        printPatterns(guessedPatterns);
+    }
+
+    // [[ PROVIDED ]]
+    // Prints out the given list of patterns.
+    // - List<String> patterns: list of patterns from the game
+    public static void printPatterns(List<String> patterns) {
+        for (String pattern : patterns) {
+            System.out.println(pattern);
+        }
+    }
+
+    // [[ PROVIDED ]]
+    // Returns true if the game is finished, meaning the user guessed the word. Returns
+    // false otherwise.
+    // - List<String> patterns: list of patterns from the game
+    public static boolean isFinished(List<String> patterns) {
+        if (patterns.isEmpty()) {
+            return false;
+        }
+        String lastPattern = patterns.get(patterns.size() - 1);
+        return !lastPattern.contains("⬜") && !lastPattern.contains("🟨");
+    }
+
+    // [[ PROVIDED ]]
+    // Loads the contents of a given file Scanner into a List<String> and returns it.
+    // - Scanner dictScan: contains file contents
+    public static List<String> loadFile(Scanner dictScan) {
+        List<String> contents = new ArrayList<>();
+        while (dictScan.hasNext()) {
+            contents.add(dictScan.next());
+        }
+        return contents;
+    }
+
+
+    // Behavior: Filters the dictionary for words of the specified length.
+    // Exceptions: Throws IllegalStateException if wordLength is less than 1
+    // Returns: Set of words matching length
+    // Parameters: 
+    //      - contents(list of all words)
+    //      - wordLength(desired word length)
+    public static Set<String> prepDictionary(List<String> contents, int wordLength) {
+        
+        if (wordLength < 1) {
+            throw new IllegalArgumentException();
+        }
+
+        Set<String> match = new HashSet<>();
+        for (String word : contents) {
+            if (word.length() == wordLength) {
+                match.add(word);
+            }
+        }
+        return match;
+    }
+
+    // Behavior: Filters the dictionary for words of the specified length.
+    // Exceptions: Throws IllegalStateException if wordLength is less than 1
+    // Returns: Set of words matching length
+    // Parameters: 
+    //      - words(current possible words)
+    //      - guess(users guessed word)
+    //      - wordLength(desired word length)
+    public static String recordGuess(String guess, Set<String> words, int wordLength) {
+        
+        if (words.isEmpty() || guess.length() != wordLength) {
+            throw new IllegalArgumentException();
+        }
+
+        Map<String, Set<String>> patternPicks = patternGuess(guess, words);
+                
+        String bestPattern = "";
+        int maxSize = 0;
+
+        for (String pattern : patternPicks.keySet()) {
+            int size = patternPicks.get(pattern).size();
+            if (size > maxSize) {
+                maxSize = size;
+                bestPattern = pattern;
+            }
+        }
+
+        words.clear();
+        words.addAll(patternPicks.get(bestPattern));
+        return bestPattern;
+    }
+
+    // Behavior: Groups words by the pattern they would produce for a certain guess
+    // Exceptions: N/A
+    // Returns: Map of pattern strings to sets of words producing that certain pattern
+    // Parameters: 
+    //      - words(current possible words)
+    //      - guess(users guessed word)
+    public static Map<String, Set<String>> patternGuess(String guess, Set<String> words) {
+        Map<String, Set<String>> picks = new TreeMap<>();
+
+        for (String word : words) {
+            String pattern = patternFor(word, guess);
+            if (!picks.containsKey(pattern)) {
+                picks.put(pattern, new HashSet<>());
+            }
+            picks.get(pattern).add(word);
+        }
+        return picks;
+    }
+
+    // Behavior: Creates a pettern string comparing a word to a guess, each position
+    // in the string is a colored square:
+    // GREEN - correct
+    // YELLOW - present
+    // GRAY - absent
+    // Exceptions: N/A
+    // Returns: pattern string of colored squares
+    // Parameters: 
+    //      - words(current possible words)
+    //      - guess(users guessed word)
+    public static String patternFor(String word, String guess) {
+        List<String> pattern = new ArrayList<>();
+        for (int i = 0; i < guess.length(); i++) {
+            pattern.add("" + guess.charAt(i));
+        }
+
+        Map<Character, Integer> counts = new HashMap<>();
+        for (int i = 0; i < word.length(); i++) {
+            char letter = word.charAt(i);
+            
+            if (counts.containsKey(letter)) {
+                counts.put(letter, counts.get(letter) + 1);
+            } else {
+                counts.put(letter, 1);
+            }
+        }
+
+        for (int i = 0; i < guess.length(); i++) {
+            char guessLetter = guess.charAt(i);
+            if (guessLetter == word.charAt(i)) {
+                pattern.set(i, GREEN);
+                counts.put(guessLetter, counts.get(guessLetter) - 1);            
+            }
+        }
+
+        for (int i = 0; i < guess.length(); i++) {
+            char guessLetter = guess.charAt(i);
+            if (pattern.get(i).equals(GREEN)) {
+
+            } else if (counts.containsKey(guessLetter) && counts.get(guessLetter) > 0) {
+                    pattern.set(i, YELLOW);
+                    counts.put(guessLetter, counts.get(guessLetter) - 1);
+            } else {
+                pattern.set(i, GRAY);
+            }
+        }
+
+        String result = "";
+        for (String s : pattern) {
+            result = result + s;
+        }
+        return result;
+    }
+}
