@@ -25,4 +25,4 @@ Dynamically updates the possible word set to keep the game going
 
 Prints all generated patterns at the end
 
-Implemented entirely in plain Java
+Implemented entirely in plain Java 
