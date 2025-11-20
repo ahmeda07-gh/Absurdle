@@ -1,9 +1,3 @@
-// Ahmed Al Sammarraie
-// 11/3/25
-// CSE 122
-// P2: Absurdle
-// TA: Katharine Zhang
-
 // This program is a game of Absurdle, which loads a dictionary of words
 // and lets the user guess words of a exact length. Then the program gives feedback
 // green if correct, yellow if present, gray if absent, the program tries to prolong the game
