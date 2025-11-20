@@ -11,7 +11,6 @@ public class Absurdle  {
     public static final String YELLOW = "🟨";
     public static final String GRAY = "⬜";
 
-    // [[ ALL OF MAIN PROVIDED ]]
     public static void main(String[] args) throws FileNotFoundException {
         Scanner console = new Scanner(System.in);
         System.out.println("Welcome to the game of Absurdle.");
